@@ -5,6 +5,10 @@
 #include <QtWebKit/QWebView>
 #include <QTabWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QSplitter>
+#include <QTreeView>
+#include <QFileSystemModel>
 
 namespace Ui {
 class xhwstat;
@@ -45,6 +49,8 @@ private slots:
     void up_mem();
     /* update time string */
     void up_time();
+    /* man browser */
+    void changeCurrent(const QModelIndex &current);
 
 private:
     Ui::xhwstat *ui;
@@ -56,6 +62,7 @@ private:
     QVBoxLayout *ml4;
     QVBoxLayout *ml5;
     QVBoxLayout *ml6;
+    QHBoxLayout *ml7;
     /* webkit views */
     XQWebView *view1;
     XQWebView *view2;
@@ -63,6 +70,7 @@ private:
     XQWebView *view4;
     XQWebView *view5;
     XQWebView *view6;
+    QWebView *view7;
     /* tab containers */
     QTabWidget *tabWidget;
     /* tabs */
@@ -72,11 +80,16 @@ private:
     QWidget *tab4;
     QWidget *tab5;
     QWidget *tab6;
+    QWidget *tab7;
     /* html header and footer */
     QString hd;
     QString ft;
     /* keep the time */
     QString tm;
+    /* for man browser */
+    QTreeView *tree;
+    QSplitter *splitter;
+    QFileSystemModel *model;
 };
 
 #endif // XHWSTAT_H

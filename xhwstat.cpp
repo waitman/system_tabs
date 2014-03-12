@@ -37,6 +37,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <QMouseEvent>
 #include <QSizePolicy>
 #include <QDateTime>
+#include <QFileSystemModel>
+#include <QSplitter>
+#include <QListView>
+#include <QTextEdit>
+#include <QTreeView>
 
 /* timer times in milliseconds */
 #define HWSTAT_TIMER    1000
@@ -97,6 +102,7 @@ xhwstat::xhwstat(QWidget *parent) :
     tab4 = new QWidget;
     tab5 = new QWidget;
     tab6 = new QWidget;
+    tab7 = new QWidget;
 
     /* add the tabs to the container, label with tab name */
     tabWidget->addTab(tab1,tr("hwstat"));
@@ -105,6 +111,7 @@ xhwstat::xhwstat(QWidget *parent) :
     tabWidget->addTab(tab4,tr("msgs"));
     tabWidget->addTab(tab5,tr("eml"));
     tabWidget->addTab(tab6,tr("memory"));
+    tabWidget->addTab(tab7,tr("man browser"));
 
     /* set up tab1, hwstat output from ports/sysutils/hwstat */
     view1 = new XQWebView(tab1);
@@ -178,10 +185,36 @@ xhwstat::xhwstat(QWidget *parent) :
     connect(timer6, SIGNAL(timeout()), this, SLOT(up_mem()));
     timer6->start(MEM_TIMER);
 
+    /* set up tab7, man browser */
+    splitter = new QSplitter();
+    /* do not need pause functionality */
+    tree = new QTreeView();
+    view7 = new QWebView();
+    view7->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    view7->setHtml(hd + "man browser" + ft);
+    splitter->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    splitter->addWidget(tree);
+    splitter->addWidget(view7);
+    model = new QFileSystemModel;
+    model->setRootPath(QDir::currentPath());
+    model->sort(2,Qt::AscendingOrder);
+    tree->setModel(model);
+    tree->setAnimated(false);
+    tree->setSortingEnabled(true);
+    tree->sortByColumn(2, Qt::AscendingOrder);
+    tree->setColumnWidth(0, 250);
+    tree->setSelectionMode(QAbstractItemView::SingleSelection);
+    connect(tree, SIGNAL(clicked(QModelIndex)), this, SLOT(changeCurrent(QModelIndex)));
+    ml7 = new QHBoxLayout();
+    ml7->addWidget(splitter);
+    tab7->setLayout(ml7);
+
+
     /* display everything */
     ml = new QVBoxLayout();
     tabWidget->setLayout(ml);
     setCentralWidget(tabWidget);
+
 
 }
 
@@ -311,6 +344,28 @@ void xhwstat::up_mem()
         view6->setHtml(out);
     }
 }
+
+/* man browser */
+void xhwstat::changeCurrent(const QModelIndex &current)
+{
+
+    QString text = current.data(Qt::DisplayRole).toString();
+    QStringList arguments;
+
+    /* get man2html from http://www.oac.uci.edu/indiv/ehood/man2html.html
+        or ports/textproc/man2html */
+    QString foo = "/usr/bin/man "+text+" | /usr/local/bin/man2html ";
+
+    arguments << "-c" << foo;
+
+    QProcess* process = new QProcess(this);
+    process->start("/bin/sh", arguments);
+    process->waitForFinished();
+    QString tmp = process->readAll();
+    QString out = tmp.replace("<BODY>","<BODY STYLE='background-color:#000;color:#00ff00;'><style type='text/css'>pre { font-size:86%; }</style><H1>:: "+text+" ::</H1>");
+    view7->setHtml(out);
+
+ }
 
 XQWebView::XQWebView(QWidget *parent):
 QWebView(parent)
